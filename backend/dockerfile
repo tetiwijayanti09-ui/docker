@@ -1,0 +1,25 @@
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
+COPY app.go .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o backend app.go
+
+FROM alpine:3.22
+
+RUN adduser -D -H -u 10001 appuser
+
+WORKDIR /app
+
+COPY --from=builder /app/backend .
+
+USER 10001
+
+EXPOSE 5000
+
+ENTRYPOINT ["./backend"]
